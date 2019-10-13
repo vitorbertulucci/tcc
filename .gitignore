@@ -1,0 +1,9 @@
+*.swp
+.ipynb_checkpoints
+bin
+etc
+images/*
+include
+lib
+*.pdf
+share
