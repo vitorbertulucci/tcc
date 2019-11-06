@@ -1,0 +1,6 @@
+matplotlib
+numpy
+unidecode
+opencv-python
+imgaug
+noise
