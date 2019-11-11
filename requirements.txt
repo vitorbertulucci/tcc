@@ -4,3 +4,4 @@ unidecode
 opencv-python
 imgaug
 noise
+pandas
