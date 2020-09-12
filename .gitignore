@@ -11,4 +11,6 @@ share
 *.png
 *.zip
 
+__pycache__
 smallVictor
+TODOs

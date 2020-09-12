@@ -5,3 +5,5 @@ opencv-python
 imgaug
 noise
 pandas
+py-rouge
+nltk
