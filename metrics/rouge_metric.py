@@ -1,4 +1,10 @@
 import rouge
+import csv
+import os
+import re
+import shutil
+import collections
+from datetime import datetime
 
 class RougeMetric:
     """
@@ -28,6 +34,7 @@ class RougeMetric:
     """
     data = []
     computed_data_size = 0
+    max_n = 1
     rouge_instance = {}
     BATCH_SIZE = 1000
 
@@ -62,7 +69,6 @@ class RougeMetric:
         if self.computed_data_size % self.BATCH_SIZE == 0:
             start = self.computed_data_size
         slice_obj = slice(start, end)
-        print(slice_obj)
         for data in self.data[slice_obj]:
             # print('Evaluating data for "{}" file'.format(data['file_reference']))
             data_reference = data['reference']
@@ -72,7 +78,6 @@ class RougeMetric:
                         'rouge_metric': self.rouge_instance.get_scores(data[key], data_reference)
                     }
             self.computed_data_size += 1
-            print(self.computed_data_size)
 
 
     def store_data(self, file_reference, reference, simple_processor, gan_processor, decrappification_processor):
@@ -94,9 +99,7 @@ class RougeMetric:
         """
 
         data_length = len(self.data)
-        print(data_length ,data_length % self.BATCH_SIZE, data_length > 0)
         if data_length % self.BATCH_SIZE == 0 and data_length > 0:
-            print('echa')
             self.compute_metric_value()
 
         ref_dict = {
@@ -107,3 +110,59 @@ class RougeMetric:
                 'decrappification_processor': decrappification_processor
             }
         self.data.append(ref_dict)
+
+
+    def export_data(self, filename, delimiter=';'):
+        """
+        Export stored data to CSV file. If given filename exists, it will create a backup file.
+
+        Parameters
+        ----------
+        - filename: str
+            Path to destination file
+        - delimiter: str, default to ';'
+            CSV delimiter
+
+        Returns
+        -------
+        - result: dict
+            The result dict contains 'rows' (int) and 'backup_filename' (str) keys.
+            'rows' define the count of written data on file and 'backup_filename' is the backup filename if
+            the given filename exists.
+        """
+        if self.computed_data_size != len(self.data):
+            self.compute_metric_value()
+
+        if os.path.exists(filename):
+            timestamp_now = datetime.now().timestamp()
+            name = filename
+            if re.search('\.csv$', filename):
+                name = name.replace('.csv', '')
+
+            backup_filename = '{}-{}.csv'.format(name, timestamp_now)
+            print('Warn: {} exists. Moving it to {}'.format(filename, backup_filename))
+            shutil.move(filename, backup_filename)
+
+        with open(filename, 'w') as csvfile:
+            writer = None
+            header = ['file_reference']
+            header_written = False
+            i = 0
+            # TODO: minimize method complexity
+            for data in self.data:
+                row = {
+                        'file_reference': data['file_reference']
+                    }
+                for index, key in enumerate(data):
+                    if re.search('processor', key):
+                        processor = key.split('_')[0]
+                        metric_value = list(sorted(data[key]['rouge_metric'].items(), key=lambda x: x[0]))
+                        for metric_key, value in metric_value:
+                            row_key = '{}_{}'.format(processor, metric_key)
+                            if not header_written:
+                                header.append(row_key)
+                            row[row_key] = value
+                if i == 0:
+                    writer = csv.DictWriter(csvfile, fieldnames=header, delimiter=delimiter)
+                    writer.writeheader()
+                writer.writerow(row)
