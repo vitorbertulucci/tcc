@@ -7,3 +7,5 @@ noise
 pandas
 py-rouge
 nltk
+glob3
+pytesseract
