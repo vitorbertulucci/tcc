@@ -74,6 +74,11 @@ class SimpleProcessor:
             Possible variation of correction angle
         - limit: int, optional
             A limit for rotation angle
+
+        Returns:
+        --------
+        - rotated: dtype('uint8') with single channel
+            Image with skew corrected based in best angle found by algorithm
         """
         def determine_score(arr, angle):
             data = inter.rotate(arr, angle, reshape=False, order=0)
@@ -95,23 +100,79 @@ class SimpleProcessor:
         rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, \
                 borderMode=cv2.BORDER_REPLICATE)
 
-        return best_angle, rotated
+        return rotated
+    
+    def noise_removal(self, image, ):
+        """
+        Applies image denoising using Non-local Means Denoising algorithm.
+
+        Parameters:
+        -----------
+        - image: dtype('uint8') with 3 channels
+            Greyscale image
+            
+        Returns:
+        --------
+        - dst: dtype('uint8') with single channel
+            Denoised image
+        """
+        img_shape = image.shape
+        dst = np.zeros(img_shape)
+        return cv2.fastNlMeansDenoising(image, dst, 5, 7, 21)
 
 
     def erode(self, image, kernel_size=5, iterations=1):
+        """
+        Tries to thin image edges using based on a kernel size using CV2 erode method
+
+        Parameters:
+        -----------
+        - image: dtype('uint8') with 3 channels
+            Greyscale image
+        - kernel_size: int, optional, default to 5
+            Size of image erode kernel
+        - iterations: int, optional, default to 1
+            Number of kernel iteractions over the image
+            
+        Returns:
+        --------
+        - image: dtype('uint8') with single channel
+            Image with thin edges
+        """
         kernel = np.ones((kernel_size, kernel_size), np.uint8)
         return cv2.erode(image, kernel, iterations)
 
 
     def preprocess(self, image):
+        """
+        Executes Simple Processos image correction pipeline in 4 steps:
+            1) Binarization;
+            2) Noise Removal
+            3) Skew Correction
+            4) Thinning and Skeletonization
+
+        Parameters:
+        -----------
+        - image: dtype('uint8') with 3 channels
+            Colored Image
+            
+        Returns:
+        --------
+        - image: dtype('uint8') with single channel
+            Binarized greyscale image with image corrections and noise removal actions applied
+        """
         # 1) Binarization
         grayscale = self.get_grayscale(image)
         thresh = self.thresholding(grayscale)
         adaptative_thresh = self.adaptative_thresholding(thresh)
-        # 2) Skew Correction
-        corrected_skew_image = self.correct_skew(adaptative_thresh)
-        # 3) Noise Removal
-        # 4) Thinning and Skeletonization
-        ts = self.erode(corrected_skew_image[1], 1, 3)
+
+        # 2) Noise Removal
+        denoised = self.noise_removal(adaptative_thresh)
+
+        # 3) Skew Correction
+        corrected_skew_image = self.correct_skew(denoised)
         
-        return ts
+        # 4) Thinning and Skeletonization
+        ts = self.erode(denoised, 2, 3)
+        
+        return corrected_skew_image
