@@ -9,3 +9,5 @@ py-rouge
 nltk
 glob3
 pytesseract
+fastai
+nvidia-ml-py3
