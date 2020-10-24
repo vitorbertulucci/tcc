@@ -11,6 +11,8 @@ share
 *.png
 *.zip
 *.csv
+*.h5
+*.npy
 
 __pycache__
 smallVictor
