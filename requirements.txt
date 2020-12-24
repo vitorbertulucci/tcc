@@ -11,3 +11,5 @@ glob3
 pytesseract
 fastai
 nvidia-ml-py3
+keras
+tensorflow-gpu

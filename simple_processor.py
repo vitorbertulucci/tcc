@@ -46,7 +46,7 @@ class SimpleProcessor:
 
     def adaptative_thresholding(self, image, maxValue=255):
         """
-        Applies threshold with THRESH_TRUNC type
+        Applies adaptative threshold with ADAPTIVE_THRESH_GAUSSIAN_C type
 
         Parameters:
         -----------
@@ -102,7 +102,7 @@ class SimpleProcessor:
 
         return rotated
     
-    def noise_removal(self, image, ):
+    def noise_removal(self, image):
         """
         Applies image denoising using Non-local Means Denoising algorithm.
 
@@ -118,7 +118,7 @@ class SimpleProcessor:
         """
         img_shape = image.shape
         dst = np.zeros(img_shape)
-        return cv2.fastNlMeansDenoising(image, dst, 5, 7, 21)
+        return cv2.fastNlMeansDenoising(image, dst, h=5, block_size=7, search_window=21)
 
 
     def erode(self, image, kernel_size=5, iterations=1):
@@ -139,7 +139,7 @@ class SimpleProcessor:
         - image: dtype('uint8') with single channel
             Image with thin edges
         """
-        kernel = np.ones((kernel_size, kernel_size), np.uint8)
+        kernel = np.zeros((kernel_size, kernel_size), np.uint8)
         return cv2.erode(image, kernel, iterations)
 
 
@@ -163,7 +163,7 @@ class SimpleProcessor:
         """
         # 1) Binarization
         grayscale = self.get_grayscale(image)
-        thresh = self.thresholding(grayscale)
+#         thresh = self.thresholding(grayscale)
         adaptative_thresh = self.adaptative_thresholding(thresh)
 
         # 2) Noise Removal

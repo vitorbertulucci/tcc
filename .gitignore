@@ -11,7 +11,12 @@ share
 *.png
 *.zip
 *.csv
+*.h5
+*.npy
+*.txt
 
 __pycache__
 smallVictor
 TODOs
+crappy_images*
+wandb
